@@ -1,38 +1,48 @@
-import { Link } from 'expo-router'
-import { View, Text, StyleSheet } from 'react-native'
+import React, { useState, useEffect } from "react";
+import { View, Text, TextInput, Button, Alert } from "react-native";
+import { useRouter } from "expo-router";
+import { auth } from "../firebaseConfig";
+import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 
-const Home = () => {
+export default function Login() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (user) router.replace("/home");
+    });
+    return unsub;
+  }, []);
+
+  const handleLogin = async () => {
+    try {
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      router.replace("/home");
+    } catch (err) {
+      Alert.alert("Login failed", err.message);
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>
-        B O O K I T
-      </Text>
-      <Link style={styles.link} href="/goals">
-        View Your Goals
-      </Link>
-      <Link style={styles.link} href="/goals/create">
-        Add a New Goal
-      </Link>
+    <View style={{ padding: 20 }}>
+      <Text style={{ fontSize: 26, fontWeight: "bold" }}>📖 BookiT Readings</Text>
+      <TextInput
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+        style={{ borderWidth: 1, marginVertical: 8, padding: 8 }}
+      />
+      <TextInput
+        placeholder="Password"
+        secureTextEntry
+        value={password}
+        onChangeText={setPassword}
+        style={{ borderWidth: 1, marginVertical: 8, padding: 8 }}
+      />
+      <Button title="Login" onPress={handleLogin} />
+      <Button title="Signup" onPress={() => router.push("/signup")} />
     </View>
-  )
+  );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center'
-  },
-  title: {
-    marginVertical: 40,
-    fontSize: 28,
-  },
-  link: {
-    marginVertical: 20,
-    padding: 16,
-    backgroundColor: '#21cc8d',
-    color: 'white',
-    borderRadius: 8,
-  },
-})
-
-export default Home
