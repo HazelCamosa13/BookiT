@@ -1,42 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Button, Alert } from 'react-native';
-import { collection, onSnapshot, query, where, addDoc, doc, deleteDoc } from 'firebase/firestore';
-import { signOut } from 'firebase/auth';
-import { auth, db } from '../../firebaseConfig';
-import BookingCard from '../components/BookingCard';
-
+import React, { useEffect, useState } from "react";
+import { View, Text, Button } from "react-native";
+import { auth } from "../firebaseConfig";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 
 export default function HomeScreen({ navigation }) {
-const [bookings, setBookings] = useState([]);
+  const [user, setUser] = useState(null);
 
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => setUser(u));
+    return unsub;
+  }, []);
 
-useEffect(() => {
-const q = query(collection(db, 'bookings'), where('userId', '==', auth.currentUser.uid));
-const unsub = onSnapshot(q, (snapshot) => {
-const arr = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-setBookings(arr);
-});
-return unsub;
-}, []);
-
-
-const handleLogout = async () => {
-await signOut(auth);
-navigation.replace('Login');
-};
-
-
-return (
-<View style={{ flex: 1, padding: 12 }}>
-<Button title="Add Booking" onPress={() => navigation.navigate('AddBooking')} />
-<Button title="Logout" onPress={handleLogout} />
-{bookings.length === 0 ? (
-<Text>No bookings yet</Text>
-) : (
-<FlatList data={bookings} keyExtractor={item => item.id} renderItem={({ item }) => (
-<BookingCard booking={item} onEdit={() => navigation.navigate('EditBooking', { booking: item })} />
-)} />
-)}
-</View>
-);
+  return (
+    <View style={{ padding: 20 }}>
+      <Text style={{ fontSize: 24 }}>📚 Welcome to BookiT Readings</Text>
+      {user && <Text>Signed in as: {user.email}</Text>}
+      <View style={{ marginVertical: 10 }}>
+        <Button title="Manage Novels" onPress={() => navigation.navigate("Novels")} />
+      </View>
+      <Button title="Logout" onPress={() => signOut(auth).then(() => navigation.replace("Login"))} />
+    </View>
+  );
 }
